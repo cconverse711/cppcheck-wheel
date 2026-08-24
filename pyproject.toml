@@ -1,0 +1,64 @@
+[build-system]
+requires = ["scikit-build-core"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "cppcheck-py"
+dynamic = ["version"]
+license = { text = "Apache 2.0" }
+description = "Static analysis of C/C++ code"
+readme = "README.md"
+dependencies = ["pygments"]
+classifiers = [
+    "Programming Language :: C",
+    "Programming Language :: C++",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: Apache Software License",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Quality Assurance",
+]
+
+[[tool.dynamic-metadata]]
+provider = "scikit_build_core.metadata.regex"
+field = "version"
+regex = '^(?P<value>\d+\.\d+\.\d+(\.[1-9]\d*)?)'
+input = "cppcheck_version.txt"
+
+[project.urls]
+Homepage = "https://cppcheck.sourceforge.io/"
+Documentation = "https://cppcheck.sourceforge.io/manual.pdf"
+Download = "https://github.com/danmar/cppcheck/releases"
+Source = "https://github.com/cconverse711/cppcheck-wheel"
+
+[project.scripts]
+"cppcheck" = "cppcheck:cppcheck"
+"cppcheck-htmlreport" = "cppcheck:cppcheck_htmlreport"
+
+[tool.scikit-build]
+wheel.packages = ["cppcheck-py"]
+wheel.py-api = "py2.py3"
+cmake.version = ">=3.16.0"
+ninja.version = ">=1.10.0"
+build.verbose = true
+logging.level = "DEBUG"
+
+[dependency-groups]
+dev = ["pytest"]
+
+[tool.pytest.ini_options]
+# use importlib pytest import mode to avoid adding local directory to sys.path
+addopts = "--import-mode=importlib"
+
+[tool.cibuildwheel]
+# Super-verbose output for debugging purpose
+build-verbosity = 3
+# Set CMAKE_GENERATOR env var which is respected by scikit-build-core to use Ninja on all platforms
+environment = "CMAKE_GENERATOR=Ninja"
+
+# Testing commands for our wheels
+test-groups = ["dev"]
+before-test = [
+    "git config --global user.name Name",
+    "git config --global user.email foo@bar.com"
+]
+test-command = "pytest {package}/test -vvv"
