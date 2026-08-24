@@ -1,0 +1,215 @@
+name: Build + Release Wheels
+
+on:
+  push:
+    tags:
+      - 'v?[0-9]+.[0-9]+.[0-9]+'
+      - 'v?[0-9]+.[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      cppcheck_version:
+        description: "Cppcheck version to build"
+        required: false
+        default: ""
+      wheel_version:
+        description: "Version of the wheel packaging (appended to Cppcheck version)"
+        required: false
+        default: "0"
+      skip_emulation:
+        description: "Emulation builds to skip (e.g. qemu)"
+        required: false
+        default: ""
+      deploy_to_testpypi:
+        description: "Whether the build should be deployed to test.pypi.org instead regular PyPI"
+        required: true
+        default: false
+
+jobs:
+  build-wheels:
+    name: "${{ matrix.os }} :: ${{ matrix.platform }}-${{ matrix.arch }}"
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        # emulated linux: generate 4 matrix combinations with qemu on ubuntu:
+        arch: ["ppc64le", "s390x"]
+        platform: ["manylinux", "musllinux"]
+        os: [ubuntu-latest]
+        emulation: ["qemu"]
+        exclude:
+          # conditionally skip jobs requiring emulation:
+          - os: ubuntu-latest
+            emulation: ${{ github.event.inputs.skip_emulation }}
+        include:
+          # linux
+          - os: ubuntu-latest
+            platform: "manylinux"
+            arch: "x86_64"
+          - os: ubuntu-latest
+            platform: "manylinux"
+            arch: "i686"
+          - os: ubuntu-latest
+            platform: "musllinux"
+            arch: "x86_64"
+          - os: ubuntu-latest
+            platform: "musllinux"
+            arch: "i686"
+          - os: ubuntu-24.04-arm
+            platform: "manylinux"
+            arch: "aarch64"
+          - os: ubuntu-24.04-arm
+            platform: "musllinux"
+            arch: "aarch64"
+          - os: ubuntu-24.04-arm
+            platform: "manylinux"
+            arch: "armv7l"
+          - os: ubuntu-24.04-arm
+            platform: "musllinux"
+            arch: "armv7l"
+          # windows
+          - os: windows-latest
+            platform: "win"
+            arch: "AMD64"
+          - os: windows-latest
+            platform: "win"
+            arch: "x86"
+          - os: windows-11-arm
+            platform: "win"
+            arch: "ARM64"
+          # macos
+          - os: macos-15-intel
+            platform: "macos"
+            arch: "x86_64"
+          - os: macos-latest
+            platform: "macos"
+            arch: "arm64"
+
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Support long paths on Windows
+      if: runner.os == 'Windows'
+      run: git config --system core.longpaths true
+
+    - name: Set up msvc on Windows
+      if: runner.os == 'Windows'
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: ${{ matrix.arch }}
+
+    - name: Remove strip binaries on arm64 windows runner to avoid "file format not recognized" error when running strip
+      if: matrix.platform == 'win' && matrix.arch == 'ARM64'
+      run: |
+        rm C:\mingw64\bin\strip.exe
+        rm C:\Strawberry\c\bin\strip.exe
+
+    - name: Override Cppcheck version (${{ github.event.inputs.cppcheck_version }})
+      if: github.event.inputs.cppcheck_version
+      run: |
+        echo "${{ github.event.inputs.cppcheck_version }}.${{ github.event.inputs.wheel_version }}" > cppcheck_version.txt
+        cat cppcheck_version.txt
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v4.2.0
+      with:
+        image: tonistiigi/binfmt:qemu-v8.1.5
+      if: runner.os == 'Linux' && matrix.emulation == 'qemu'
+
+    - name: Build wheels
+      uses: pypa/cibuildwheel@v4.1
+      env:
+        CIBW_ARCHS: "${{ matrix.arch }}"
+        # restrict to a single Python version as wheel does not depend on Python:
+        CIBW_BUILD: "cp311-${{ matrix.platform }}*"
+
+    - uses: actions/upload-artifact@v7
+      with:
+        name: artifacts-wheels-${{ matrix.platform }}-${{ matrix.arch }}
+        path: ./wheelhouse/*.whl
+
+  build-sdist:
+    name: Build source distribution
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Override Cppcheck version (${{ github.event.inputs.cppcheck_version }})
+        if: github.event.inputs.cppcheck_version
+        run: |
+          echo "${{ github.event.inputs.cppcheck_version }}.${{ github.event.inputs.wheel_version }}" > cppcheck_version.txt
+          cat cppcheck_version.txt
+
+      - name: Build SDist
+        run: pipx run build --sdist
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: artifacts-sdist
+          path: dist/*.tar.gz
+
+  test-sdist:
+    name: Test build from source distribution
+    needs: [build-sdist]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v6
+        name: Install Python
+        with:
+          python-version: '3.13'
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: artifacts-sdist
+          path: sdist
+
+      - name: Install from SDist
+        run:
+          pip install sdist/*.tar.gz
+
+      - name: Install test requirements
+        run:
+          pip install --group dev
+
+      - name: Set up Git identity
+        run: |
+          git config --global user.name Name
+          git config --global user.email foo@bar.com
+
+      - name: Run test suite
+        working-directory: test
+        run:
+          python -m pytest --import-mode=importlib -vvv
+
+  upload_pypi:
+    name: Upload to PyPI
+    needs: [build-wheels, build-sdist, test-sdist]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+    if: github.repository_owner == 'cconverse711'
+
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: artifacts-*
+          merge-multiple: true
+          path: dist
+
+      - name: Upload to PyPI
+        uses: pypa/gh-action-pypi-publish@v1.14.0
+        if: (startsWith(github.event.ref, 'refs/tags/')) || (github.event.inputs.deploy_to_testpypi == 'false')
+
+      - name: Upload to TestPyPI
+        uses: pypa/gh-action-pypi-publish@v1.14.0
+        if: github.event.inputs.deploy_to_testpypi == 'true'
+        with:
+          repository-url: https://test.pypi.org/legacy/
+
+      - name: GitHub release for tagged commits
+        uses: softprops/action-gh-release@v3
+        if: startsWith(github.ref, 'refs/tags/')
