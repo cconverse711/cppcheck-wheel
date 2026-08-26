@@ -6,12 +6,13 @@ string(REGEX MATCH "^([0-9]+)\.([0-9]+)\.([0-9]+)" CPPCHECK_VERSION "${SKBUILD_P
 message(STATUS "cppcheck version: ${CPPCHECK_VERSION}")
 
 # Define a build rule for cppcheck
-set(CPPCHECK_DOWNLOAD_URL "https://github.com/danmar/cppcheck/archive/refs/tags/${CPPCHECK_VERSION}.tar.gz")
+set(CPPCHECK_DOWNLOAD_URL "https://github.com/cppcheck-opensource/cppcheck/archive/refs/tags/${CPPCHECK_VERSION}.tar.gz")
 include(ExternalProject)
 ExternalProject_add(build-cppcheck
   URL "${CPPCHECK_DOWNLOAD_URL}"
   SOURCE_DIR ${CMAKE_BINARY_DIR}/cppcheck
   BINARY_DIR ${CMAKE_BINARY_DIR}/cppcheck-build
+  DOWNLOAD_DIR ${CMAKE_BINARY_DIR}/cppcheck-download
   UPDATE_COMMAND ""
   INSTALL_COMMAND ""
   USES_TERMINAL_DOWNLOAD 1
@@ -65,8 +66,9 @@ install(DIRECTORY
   FILES_MATCHING PATTERN "*.xml"
 )
 
-install(
-  DIRECTORY
-  ${CMAKE_BINARY_DIR}/cppcheck/
-  DESTINATION cppcheck/source
+# Install the downloaded source archive for GPLv3 compliance.
+install(FILES
+  ${CMAKE_BINARY_DIR}/cppcheck-download/${CPPCHECK_VERSION}.tar.gz
+  DESTINATION cppcheck
+  RENAME cppcheck-${CPPCHECK_VERSION}.tar.gz
 )
