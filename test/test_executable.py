@@ -48,7 +48,6 @@ def test_cppcheck():
     import cppcheck
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        print(f"Created temporary directory at: {tmpdir}")
         compilation_unit = Path(tmpdir) / "dummy.cpp"
         with open(compilation_unit, "w") as ostr:
             ostr.write("int main() { return 0;}\n")
@@ -60,7 +59,7 @@ def test_cppcheck():
                 "cppcheck",
                 "--enable=all",
                 "--addon=naming",
-                "--library=posix",
+                "--library=std",
                 "--xml",
                 f"--output-file={str(xml_path)}",
                 str(compilation_unit),

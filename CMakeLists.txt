@@ -18,7 +18,7 @@ ExternalProject_add(build-cppcheck
   USES_TERMINAL_DOWNLOAD 1
   USES_TERMINAL_CONFIGURE 1
   USES_TERMINAL_BUILD 1
-  CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+  CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release -U FILESDIR -DCMAKE_POLICY_VERSION_MINIMUM=3.5
   BUILD_COMMAND ${CMAKE_COMMAND} --build . --target cppcheck --config Release
 )
 set(config-subfolder "")
@@ -44,7 +44,7 @@ install(
   PROGRAMS
   ${cppcheck-executable}
   ${CMAKE_BINARY_DIR}/cppcheck/htmlreport/cppcheck-htmlreport
-  DESTINATION cppcheck/data/bin
+  DESTINATION cppcheck/data
 )
 
 install(DIRECTORY
