@@ -122,6 +122,8 @@ jobs:
         CIBW_ARCHS: "${{ matrix.arch }}"
         # restrict to a single Python version as wheel does not depend on Python:
         CIBW_BUILD: "cp311-${{ matrix.platform }}*"
+         # Use a newer manylinux image for armv7l builds
+        CIBW_MANYLINUX_ARMV7L_IMAGE: manylinux_2_35
 
     - uses: actions/upload-artifact@v7
       with:
