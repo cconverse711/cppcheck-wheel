@@ -22,7 +22,7 @@ on:
       deploy_to_testpypi:
         description: "Whether the build should be deployed to test.pypi.org instead regular PyPI"
         required: true
-        default: false
+        default: 'false'
 
 jobs:
   build-wheels:
@@ -30,6 +30,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     strategy:
+      fail-fast: false  # Prevents other matrix jobs from being canceled if one fails
       matrix:
         # emulated linux: generate 4 matrix combinations with qemu on ubuntu:
         arch: ["ppc64le", "s390x"]
@@ -191,7 +192,7 @@ jobs:
     permissions:
       id-token: write
       contents: write
-    if: github.repository_owner == 'cconverse711'
+    if: false && github.repository_owner == 'cconverse711'
 
     steps:
       - uses: actions/download-artifact@v8
