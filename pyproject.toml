@@ -35,7 +35,7 @@ Source = "https://github.com/cconverse711/cppcheck-wheel"
 "cppcheck-htmlreport" = "cppcheck:cppcheck_htmlreport"
 
 [tool.scikit-build]
-wheel.packages = ["cppcheck-py"]
+wheel.packages = ["cppcheck"]
 wheel.py-api = "py2.py3"
 cmake.version = ">=3.16.0"
 ninja.version = ">=1.10.0"

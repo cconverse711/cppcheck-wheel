@@ -11,14 +11,19 @@ EXECUTABLES = (
 
 @pytest.fixture(autouse=True)
 def ensure_cppcheck_from_wheel(monkeypatch):
-    """test the installed cppcheck package, not the local one"""
-    this_dir = Path(__file__).resolve().absolute().parent
-    for pd in (this_dir, this_dir / ".."):
-        try:
-            new_path = sys.path.remove(pd)
-            monkeypatch.setattr(sys, "path", new_path)
-        except ValueError:
-            pass
+    """Test the installed cppcheck package, not the local one."""
+    this_dir = Path(__file__).resolve().parent
+
+    paths_to_remove = {
+        this_dir,
+        this_dir.parent,
+    }
+
+    sys.path[:] = [
+        path for path in sys.path
+        if Path(path).resolve() not in paths_to_remove
+    ]
+
     monkeypatch.delitem(sys.modules, "cppcheck", raising=False)
 
 @pytest.mark.parametrize("executable", EXECUTABLES)
