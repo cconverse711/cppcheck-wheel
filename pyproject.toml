@@ -42,6 +42,11 @@ ninja.version = ">=1.10.0"
 build.verbose = true
 logging.level = "DEBUG"
 
+[tool.scikit-build.env]
+# Add these flags to suppress the problematic warnings
+# This allows GCC to accept the valid C++ code pattern
+CXXFLAGS = "-Wno-noexcept-type -Wno-init-list-lifetime"
+
 [dependency-groups]
 dev = ["pytest"]
 
