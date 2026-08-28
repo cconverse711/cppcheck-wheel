@@ -57,8 +57,4 @@ environment = "CMAKE_GENERATOR=Ninja"
 
 # Testing commands for our wheels
 test-groups = ["dev"]
-before-test = [
-    "git config --global user.name Name",
-    "git config --global user.email foo@bar.com"
-]
 test-command = "pytest {package}/test -vvv"
