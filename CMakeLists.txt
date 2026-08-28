@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16...4.0)
 project(${SKBUILD_PROJECT_NAME} VERSION ${SKBUILD_PROJECT_VERSION})
 
 message(STATUS "cppcheck-wheel version: ${SKBUILD_PROJECT_VERSION}")
-string(REGEX MATCH "^([0-9]+)\.([0-9]+)\.([0-9]+)" CPPCHECK_VERSION "${SKBUILD_PROJECT_VERSION}")
+string(REGEX MATCH "^([0-9]+)\.([0-9]+)" CPPCHECK_VERSION "${SKBUILD_PROJECT_VERSION}")
 message(STATUS "cppcheck version: ${CPPCHECK_VERSION}")
 
 # Define a build rule for cppcheck
