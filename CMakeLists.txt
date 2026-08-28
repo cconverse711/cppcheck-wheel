@@ -3,7 +3,7 @@ project(${SKBUILD_PROJECT_NAME} VERSION ${SKBUILD_PROJECT_VERSION})
 
 message(STATUS "cppcheck-wheel version: ${SKBUILD_PROJECT_VERSION}")
 string(
-    REGEX MATCH "^([0-9]+)\.([0-9]+)\.([0-9]+)"
+    REGEX MATCH "^([0-9]+)\.([0-9]+)"
     CPPCHECK_VERSION
     "${SKBUILD_PROJECT_VERSION}"
 )
