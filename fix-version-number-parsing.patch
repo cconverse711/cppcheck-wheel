@@ -1,0 +1,14 @@
+diff --git a/cmake/versions.cmake b/cmake/versions.cmake
+index f17c27f9e..aab7b3fa7 100644
+--- a/cmake/versions.cmake
++++ b/cmake/versions.cmake
+@@ -3,8 +3,7 @@ SET(VERSION "2.11")
+ STRING(REGEX MATCHALL "[0-9]+" VERSION_PARTS "${VERSION}")
+ LIST(GET VERSION_PARTS 0 VERSION_MAJOR)
+ LIST(GET VERSION_PARTS 1 VERSION_MINOR)
+-LIST(GET VERSION_PARTS 2 VERSION_PATCH)
+-SET(SOVERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
++SET(SOVERSION "${VERSION_MAJOR}.${VERSION_MINOR}")
+ 
+ # Postfix of so's:
+ SET(DLLVERSION "")

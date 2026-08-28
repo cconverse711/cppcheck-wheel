@@ -15,6 +15,7 @@ ExternalProject_add(build-cppcheck
   DOWNLOAD_DIR ${CMAKE_BINARY_DIR}/cppcheck-download
   UPDATE_COMMAND ""
   INSTALL_COMMAND ""
+  PATCH_COMMAND git apply -p1 "${CMAKE_CURRENT_LIST_DIR}/fix-version-number-parsing.patch"
   USES_TERMINAL_DOWNLOAD 1
   USES_TERMINAL_CONFIGURE 1
   USES_TERMINAL_BUILD 1
