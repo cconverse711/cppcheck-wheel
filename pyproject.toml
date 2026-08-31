@@ -36,7 +36,7 @@ Source = "https://github.com/cconverse711/cppcheck-wheel"
 
 [tool.scikit-build]
 wheel.packages = ["cppcheck"]
-wheel.py-api = "py2.py3"
+wheel.py-api = "py3"
 cmake.version = ">=3.16.0"
 ninja.version = ">=1.10.0"
 build.verbose = true
