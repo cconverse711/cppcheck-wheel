@@ -177,11 +177,6 @@ jobs:
         run:
           pip install --group dev
 
-      - name: Set up Git identity
-        run: |
-          git config --global user.name Name
-          git config --global user.email foo@bar.com
-
       - name: Run test suite
         working-directory: test
         run:
