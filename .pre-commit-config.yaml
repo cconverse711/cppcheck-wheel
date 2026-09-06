@@ -1,0 +1,42 @@
+ci:
+  autoupdate_commit_msg: "chore(deps): update pre-commit hooks"
+  autofix_commit_msg: "style: pre-commit fixes"
+  autoupdate_schedule: "monthly"
+
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v6.0.0
+  hooks:
+  - id: check-added-large-files
+  - id: check-case-conflict
+  - id: check-merge-conflict
+  - id: check-symlinks
+  - id: check-yaml
+  - id: check-toml
+  - id: debug-statements
+  - id: end-of-file-fixer
+  - id: mixed-line-ending
+  - id: trailing-whitespace
+
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.16.6
+  hooks:
+  - id: ruff-check
+    args: [--fix, --show-fixes]
+  # Run the formatter.
+  - id: ruff-format
+
+- repo: https://github.com/BlankSpruce/gersemi-pre-commit
+  rev: 0.28.1
+  hooks:
+  - id: gersemi
+- repo: https://github.com/adhtruong/mirrors-typos
+  rev: v1.50.1
+  hooks:
+    - id: typos
+- repo: https://github.com/abravalheri/validate-pyproject
+  rev: "0.26"
+  hooks:
+    - id: validate-pyproject
+      # Optional extra validations from SchemaStore:
+      additional_dependencies: ["validate-pyproject-schema-store[all]"]

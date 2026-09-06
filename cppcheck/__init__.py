@@ -1,40 +1,30 @@
-import subprocess
-import sys
-from pathlib import Path
 import functools
 import os
+import subprocess
+import sys
+from importlib.resources import files
+from pathlib import Path
 
-if sys.version_info.minor >= 9:
-    # Only available on 3.9 or later, and required on 3.12
-    from importlib.resources import files
-else:
-    import pkg_resources
 
-def get_executable(name:str) -> Path:
+def get_executable(name: str) -> Path:
     return _get_executable(name)
 
 
-@functools.lru_cache(maxsize=None)
-def _get_executable(name:str) -> Path:
-    if sys.version_info.minor >= 9:
-        # Only available in 3.9 or later, and required in 3.12
-        possibles = [
-            Path(files("cppcheck") / f"data/{name}{s}")
-            for s in ("", ".exe", ".bin", ".dmg")
-        ]
-    else:
-        possibles = [
-            Path(pkg_resources.resource_filename("cppcheck", f"data/{name}{s}"))
-            for s in ("", ".exe", ".bin", ".dmg")
-        ]
+@functools.cache
+def _get_executable(name: str) -> Path:
+    possibles = [
+        Path(files("cppcheck") / f"data/{name}{s}")
+        for s in ("", ".exe", ".bin", ".dmg")
+    ]
     for exe in possibles:
         if exe.exists():
             if os.environ.get("CPPCHECK_WHEEL_VERBOSE", None):
-                print(f'Found binary: {exe} ')
+                print(f"Found binary: {exe}")
             return exe
 
     possibles_str = "\n\t".join(map(str, possibles))
     raise FileNotFoundError(f"No executable found for {name} at\n\t{possibles_str}")
+
 
 def _run(name, *args):
     command = [_get_executable(name)]
@@ -43,6 +33,7 @@ def _run(name, *args):
     else:
         command += sys.argv[1:]
     return subprocess.call(command)
+
 
 def _run_python(name, *args):
     command = [sys.executable, _get_executable(name)]
@@ -55,8 +46,10 @@ def _run_python(name, *args):
     # we have to call the interpreter and pass the script as parameter
     return subprocess.call(command)
 
+
 def cppcheck():
     raise SystemExit(_run("cppcheck"))
+
 
 def cppcheck_htmlreport():
     raise SystemExit(_run_python("cppcheck-htmlreport"))

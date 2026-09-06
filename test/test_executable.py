@@ -1,13 +1,15 @@
 import os
-import pytest
 import sys
 import tempfile
 from pathlib import Path
+
+import pytest
 
 EXECUTABLES = (
     "cppcheck",
     "cppcheck-htmlreport",
 )
+
 
 @pytest.fixture(autouse=True)
 def ensure_cppcheck_from_wheel(monkeypatch):
@@ -20,11 +22,11 @@ def ensure_cppcheck_from_wheel(monkeypatch):
     }
 
     sys.path[:] = [
-        path for path in sys.path
-        if Path(path).resolve() not in paths_to_remove
+        path for path in sys.path if Path(path).resolve() not in paths_to_remove
     ]
 
     monkeypatch.delitem(sys.modules, "cppcheck", raising=False)
+
 
 @pytest.mark.parametrize("executable", EXECUTABLES)
 def test_executable_file(capsys, executable):
@@ -36,13 +38,16 @@ def test_executable_file(capsys, executable):
     assert os.access(exe, os.X_OK)
     assert capsys.readouterr().out == ""
 
+
 def test_verbose_output(capsys, monkeypatch):
     import cppcheck
+
     monkeypatch.setenv("CPPCHECK_WHEEL_VERBOSE", "1")
     # need to clear cache to make sure the function is run again
     cppcheck._get_executable.cache_clear()
     cppcheck.get_executable("cppcheck")
     assert capsys.readouterr().out
+
 
 def test_cppcheck():
     import cppcheck
@@ -61,15 +66,17 @@ def test_cppcheck():
                 "--addon=naming",
                 "--library=std",
                 "--xml",
-                f"--output-file={str(xml_path)}",
+                f"--output-file={xml_path!s}",
                 str(compilation_unit),
-            ) == 0
+            )
+            == 0
         )
 
-        assert(
+        assert (
             cppcheck._run_python(
                 "cppcheck-htmlreport",
-                f"--file={str(xml_path)}",
-                f"--report-dir={tmpdir}/html"
-            ) == 0
+                f"--file={xml_path!s}",
+                f"--report-dir={tmpdir}/html",
+            )
+            == 0
         )
