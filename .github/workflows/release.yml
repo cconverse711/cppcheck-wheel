@@ -71,9 +71,9 @@ jobs:
           - os: windows-latest
             platform: "win"
             arch: "AMD64"
-          - os: windows-latest
-            platform: "win"
-            arch: "x86"
+          #- os: windows-latest
+          #  platform: "win"
+          #  arch: "x86"
           - os: windows-11-arm
             platform: "win"
             arch: "ARM64"
