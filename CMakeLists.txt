@@ -9,6 +9,21 @@ string(
 )
 message(STATUS "cppcheck version: ${CPPCHECK_VERSION}")
 
+include(CheckIncludeFileCXX)
+# Check for the execinfo header, needed for backtraces support.
+check_include_file_cxx("execinfo.h" HAVE_EXECINFO_H)
+
+set(CMAKE_ARGS
+    -DCMAKE_BUILD_TYPE=Release
+    -U
+    FILESDIR
+    -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+)
+if(NOT HAVE_EXECINFO_H)
+    message(STATUS "execinfo.h not found, disabling backtrace support")
+    list(APPEND CMAKE_ARGS -DNO_UNIX_BACKTRACE_SUPPORT=ON)
+endif()
+
 # Define a build rule for cppcheck
 set(CPPCHECK_DOWNLOAD_URL
     "https://github.com/cppcheck-opensource/cppcheck/archive/refs/tags/${CPPCHECK_VERSION}.tar.gz"
@@ -25,9 +40,7 @@ ExternalProject_Add(
     USES_TERMINAL_DOWNLOAD 1
     USES_TERMINAL_CONFIGURE 1
     USES_TERMINAL_BUILD 1
-    CMAKE_ARGS
-        -DCMAKE_BUILD_TYPE=Release -U FILESDIR
-        -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+    CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${CMAKE_COMMAND} --build . --target cppcheck --config Release
 )
 set(config-subfolder "")
