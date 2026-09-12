@@ -10,8 +10,8 @@ python -m pip install cppcheck-py
 
 The tools provided are:
 
-cppcheck: performs static analysis of C/C++ source code
-cppcheck-htmlreport: generates an html report of a XML file produced by cppcheck
+* `cppcheck`: performs static analysis of C/C++ source code
+* `cppcheck-htmlreport`: generates an html report of a XML file produced by `cppcheck`
 
 This projects intends to release a new PyPI package for each major and minor release of `cppcheck`.
 
