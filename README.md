@@ -15,6 +15,8 @@ The tools provided are:
 
 This projects intends to release a new PyPI package for each major and minor release of `cppcheck`.
 
+Note that these tools are GPL-3.0 licensed; source is provided in the accompanying sdist.
+
 ## Use with pipx
 
 You can use `pipx` to run cppcheck, as well. For example, `pipx run cppcheck <args>` will run cppcheck without any previous install required on any machine with pipx (including all default GitHub Actions / Azure runners, avoiding requiring a pre-install step or even `actions/setup-python`).

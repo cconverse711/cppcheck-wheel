@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16...4.0)
+cmake_minimum_required(VERSION 3.28...4.0)
 project(${SKBUILD_PROJECT_NAME} VERSION ${SKBUILD_PROJECT_VERSION})
 
 message(STATUS "cppcheck-wheel version: ${SKBUILD_PROJECT_VERSION}")
@@ -13,43 +13,35 @@ include(CheckIncludeFileCXX)
 # Check for the execinfo header, needed for backtraces support.
 check_include_file_cxx("execinfo.h" HAVE_EXECINFO_H)
 
-set(CMAKE_ARGS
-    -DCMAKE_BUILD_TYPE=Release
-    -U
-    FILESDIR
-    -DCMAKE_POLICY_VERSION_MINIMUM=3.5
-)
+# Values cppcheck's own CMakeLists.txt will pick up as already-set variables
+# (equivalent to the old -DFOO=... CMAKE_ARGS passed to the nested build).
 if(NOT HAVE_EXECINFO_H)
     message(STATUS "execinfo.h not found, disabling backtrace support")
-    list(APPEND CMAKE_ARGS -DNO_UNIX_BACKTRACE_SUPPORT=ON)
+    set(NO_UNIX_BACKTRACE_SUPPORT ON)
 endif()
 
-# Define a build rule for cppcheck
-set(CPPCHECK_DOWNLOAD_URL
-    "https://github.com/cppcheck-opensource/cppcheck/archive/refs/tags/${CPPCHECK_VERSION}.tar.gz"
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
+set(DISABLE_DMAKE ON)
+set(FILESDIR "" CACHE STRING "" FORCE)
+
+set(CPPCHECK_ARCHIVE
+    "${CMAKE_CURRENT_SOURCE_DIR}/third_party/cppcheck-${CPPCHECK_VERSION}.tar.gz"
 )
-include(ExternalProject)
-ExternalProject_Add(
-    build-cppcheck
-    URL "${CPPCHECK_DOWNLOAD_URL}"
-    SOURCE_DIR ${CMAKE_BINARY_DIR}/cppcheck
-    BINARY_DIR ${CMAKE_BINARY_DIR}/cppcheck-build
-    DOWNLOAD_DIR ${CMAKE_BINARY_DIR}/cppcheck-download
-    UPDATE_COMMAND ""
-    INSTALL_COMMAND ""
-    USES_TERMINAL_DOWNLOAD 1
-    USES_TERMINAL_CONFIGURE 1
-    USES_TERMINAL_BUILD 1
-    CMAKE_ARGS ${CMAKE_ARGS}
-    BUILD_COMMAND ${CMAKE_COMMAND} --build . --target cppcheck --config Release
-)
-set(config-subfolder "")
-if(CMAKE_GENERATOR MATCHES "Visual Studio")
-    set(config-subfolder "Release")
+if(NOT EXISTS "${CPPCHECK_ARCHIVE}")
+    message(
+        FATAL_ERROR
+        "${CPPCHECK_ARCHIVE} not found; run scripts/vendor_cppcheck.py "
+        "(the PEP 517 backend wrapper normally does this for you)"
+    )
 endif()
-set(cppcheck-executable
-    ${CMAKE_BINARY_DIR}/cppcheck-build/${config-subfolder}/bin/cppcheck${CMAKE_EXECUTABLE_SUFFIX}
-)
+
+include(FetchContent)
+FetchContent_Declare(cppcheck URL "${CPPCHECK_ARCHIVE}" EXCLUDE_FROM_ALL)
+FetchContent_MakeAvailable(cppcheck)
+
+# Force the cppcheck target to build even though its subdirectory is
+# EXCLUDE_FROM_ALL (mirrors the old build-cppcheck ExternalProject step).
+add_custom_target(build-cppcheck ALL DEPENDS cppcheck)
 
 # Reduce the size of the executable by executing strip if it is present on the system
 find_program(STRIP_EXECUTABLE strip)
@@ -57,7 +49,7 @@ if(STRIP_EXECUTABLE)
     add_custom_target(
         strip-cppcheck
         ALL
-        COMMAND ${STRIP_EXECUTABLE} ${cppcheck-executable}
+        COMMAND ${STRIP_EXECUTABLE} $<TARGET_FILE:cppcheck>
         COMMENT "Stripping cppcheck executable for size reduction"
     )
     add_dependencies(strip-cppcheck build-cppcheck)
@@ -66,13 +58,13 @@ endif()
 # Define an installation rule that copies the executable to our Python package
 install(
     PROGRAMS
-        ${cppcheck-executable}
-        ${CMAKE_BINARY_DIR}/cppcheck/htmlreport/cppcheck-htmlreport
+        $<TARGET_FILE:cppcheck>
+        ${cppcheck_SOURCE_DIR}/htmlreport/cppcheck-htmlreport
     DESTINATION cppcheck/data
 )
 
 install(
-    DIRECTORY ${CMAKE_BINARY_DIR}/cppcheck/addons
+    DIRECTORY ${cppcheck_SOURCE_DIR}/addons
     DESTINATION cppcheck/data
     FILES_MATCHING
     PATTERN "*.py"
@@ -80,22 +72,21 @@ install(
 )
 
 install(
-    DIRECTORY ${CMAKE_BINARY_DIR}/cppcheck/cfg
+    DIRECTORY ${cppcheck_SOURCE_DIR}/cfg
     DESTINATION cppcheck/data
     FILES_MATCHING
     PATTERN "*.cfg"
 )
 
 install(
-    DIRECTORY ${CMAKE_BINARY_DIR}/cppcheck/platforms
+    DIRECTORY ${cppcheck_SOURCE_DIR}/platforms
     DESTINATION cppcheck/data
     FILES_MATCHING
     PATTERN "*.xml"
 )
 
-# Install the downloaded source archive for GPLv3 compliance.
 install(
-    FILES ${CMAKE_BINARY_DIR}/cppcheck-download/${CPPCHECK_VERSION}.tar.gz
+    FILES ${cppcheck_SOURCE_DIR}/COPYING
     DESTINATION cppcheck
-    RENAME cppcheck-${CPPCHECK_VERSION}.tar.gz
+    RENAME COPYING-cppcheck
 )
