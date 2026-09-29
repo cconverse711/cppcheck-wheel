@@ -9,8 +9,19 @@ string(
 )
 message(STATUS "cppcheck version: ${CPPCHECK_VERSION}")
 
-include(CheckIncludeFileCXX)
+# Check if the current compiler/linker toolchain supports IPO
+include(CheckIPOSupported)
+check_ipo_supported(RESULT ipo_supported OUTPUT ipo_error)
+
+if(ipo_supported)
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+    message(STATUS "IPO/LTO enabled")
+else()
+    message(WARNING "IPO/LTO not supported: ${ipo_error}")
+endif()
+
 # Check for the execinfo header, needed for backtraces support.
+include(CheckIncludeFileCXX)
 check_include_file_cxx("execinfo.h" HAVE_EXECINFO_H)
 
 # Values cppcheck's own CMakeLists.txt will pick up as already-set variables
